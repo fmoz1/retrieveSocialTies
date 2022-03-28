@@ -4,7 +4,7 @@
 # TO EXPORT DATA FOR ANALYSIS,
 # CHANGE PARAMETERS IN THIS SCRIPT
 # AND IN TERMINAL
-# python3 -m run.py
+# python3 run.py
 
 # basic imports
 import pandas as pd
@@ -24,10 +24,10 @@ from itertools import product
 # for data version naming
 from inspect import signature
 
-# store generated data here
+# store data in new directory
 OUT_DIRECTORY = '../output/'
 
-# PARAMS
+# PARAMS OPTIONS
 RELATION_TYPES_ = (
     'eitherRelations',  # default
     'eitherRelations_withPartySchool',
@@ -50,47 +50,51 @@ FACTION_CENTRALITY_OPTIONS = [''.join(_) for _ in product(
     CENTRALITY, WEIGHTING_OPTIONS_, WEIGHTING_OPTIONS_)]
 
 # TO DO:
-# MODIFY PARAMETERS HERE
+# CHOOSE PARAMMS HER
 PARAMS = {'politician_manager_relation_type': 'eitherRelations',
           'politician_politician_relation_type': 'eitherRelations',
           'centrality_to_normalize': ['closenessCentrality'],
-          'scaler': MinMaxScaler}
+          # note: list of centralities
+          # 'centrality_to_normalize': ['degreeCentrality', 'closenessCentrality', 'eigenCentrality'],
+          'scaler': MinMaxScaler,
+          # or StandardScaler
+          }
 
 
-# NO NEED TO MODIFY
-data = add_timestamp_and_concat(
-    find_data(relation_type=PARAMS['politician_manager_relation_type']))
+def get_data(**PARAMS):
+    data = add_timestamp_and_concat(
+        find_data(relation_type=PARAMS['politician_manager_relation_type']))
 
-print('Shape of manager centrality among politicians data: ', data.shape)
-print('\n')
+    print('Shape of manager centrality among politicians data: ', data.shape)
 
-data = normalize(data=data, columns=PARAMS['centrality_to_normalize'],
-                 scaler=PARAMS['scaler'])
+    data = normalize(data=data, columns=PARAMS['centrality_to_normalize'],
+                     scaler=PARAMS['scaler'])
 
-output_name = "".join([i for i in
-                       str(signature(find_data).parameters['pattern']).
-                       split('=')[1]
-                       if i.isalpha()])\
-    + '_' \
-    + str(PARAMS['politician_manager_relation_type'])
+    output_name = "".join([i for i in
+                           str(signature(find_data).parameters['pattern']).
+                           split('=')[1]
+                           if i.isalpha()])\
+        + '_' \
+        + str(PARAMS['politician_manager_relation_type'])
 
-# OPTIONAL: specify relation type between politicians and politicians
-# inner_pol: TIES BETWEEN POLITICIANS AND POLITICIANS
-# relation_near: DIRECT TIES BETWEEN MANGERS AND POLITICIANS
-iv_data = construct_iv(relation_inner_pol=PARAMS['politician_politician_relation_type'],
-                       relation_near=PARAMS['politician_manager_relation_type'])
-print('Shape of manager calculated faction centrality instrument: ', iv_data.shape)
-print('\n')
+    # OPTIONAL: specify relation type between politicians and politicians
+    # inner_pol: TIES BETWEEN POLITICIANS AND POLITICIANS
+    # relation_near: DIRECT TIES BETWEEN MANGERS AND POLITICIANS
+    iv_data = construct_iv(relation_inner_pol=PARAMS['politician_politician_relation_type'],
+                           relation_near=PARAMS['politician_manager_relation_type'])
 
-# OPTIONAL: specify faction centrality measures to transform
-# suppose we just need closeness centralities, there are 3 x 3 combinations
-iv_centralities = [_ for _ in FACTION_CENTRALITY_OPTIONS
-                   if _.startswith(tuple(PARAMS['centrality_to_normalize']))]
-iv_data = normalize(data=iv_data, columns=iv_centralities,
-                    scaler=PARAMS['scaler'])
+    # OPTIONAL: specify faction centrality measures to transform
+    # suppose we just need closeness centralities, there are 3 x 3 combinations
+    iv_centralities = [_ for _ in FACTION_CENTRALITY_OPTIONS
+                       if _.startswith(tuple(PARAMS['centrality_to_normalize']))]
+    iv_data = normalize(data=iv_data, columns=iv_centralities,
+                        scaler=PARAMS['scaler'])
+
+    # EXPORT DATA
+    data.to_csv(OUT_DIRECTORY + f'{output_name}.csv')
+    iv_data.to_csv(OUT_DIRECTORY +
+                   f"factionIV_{PARAMS['politician_politician_relation_type']}.csv")
 
 
-# EXPORT DATA
-data.to_csv(OUT_DIRECTORY + f'{output_name}.csv')
-iv_data.to_csv(OUT_DIRECTORY +
-               f"factionIV_{PARAMS['politician_politician_relation_type']}.csv")
+if __name__ == '__main__':
+    get_data(**PARAMS)
