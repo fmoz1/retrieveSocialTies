@@ -217,6 +217,13 @@ def construct_iv(relation_near='eitherRelations', relation_inner_pol='eitherRela
 
     # calculate manager faction centrality in each year (unique manager-year index)
     managerFactionCentrality = sort_managers(managerFactions)
+    flatten_colnames(managerFactionCentrality)
     print('Shape of manager faction centrality data: ',
           managerFactionCentrality.shape)
+
     return managerFactionCentrality
+
+
+def flatten_colnames(data):
+    data.columns = [''.join(col).strip() for col in data.columns.values]
+    return data
