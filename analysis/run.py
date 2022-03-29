@@ -50,7 +50,7 @@ FACTION_CENTRALITY_OPTIONS = [''.join(_) for _ in product(
     CENTRALITY, WEIGHTING_OPTIONS_, WEIGHTING_OPTIONS_)]
 
 # TO DO:
-# CHOOSE PARAMMS HER
+# CHOOSE PARAMMS HERE
 PARAMS = {'politician_manager_relation_type': 'eitherRelations',
           'politician_politician_relation_type': 'eitherRelations',
           'centrality_to_normalize': ['closenessCentrality'],
