@@ -7,6 +7,6 @@ __pycache__/
 # Jupyter Notebook
 .ipynb_checkpoints
 # Others
-notes/* 
-datafiles/*/*
+notes/
+datafiles/*
 output/* 
