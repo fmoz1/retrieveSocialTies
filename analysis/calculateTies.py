@@ -9,6 +9,8 @@ import re
 import pandas as pd
 import numpy as np
 
+FIRM_AGGREGATION = ('max', 'mean', 'count')
+
 
 def match_csvs(filename_pattern, relation_type):
     return re.compile(rf'{filename_pattern}_\d\d\d\d_*_{relation_type}.csv')
@@ -36,7 +38,7 @@ def find_data(pattern='managerCentrality_politicianNetwork', relation_type='eith
     return matched_csvs
 
 
-# test
+# test find files
 # test_files = find_data(
 #    pattern='politicianCentrality_politicallNetwork', relation_type='alumni')
 
@@ -61,4 +63,30 @@ def add_timestamp_and_concat(files, names=None):
 
 
 # export manager centrality data
-data = add_timestamp_and_concat(find_data())  # all default
+# data = add_timestamp_and_concat(find_data())  # all default
+
+
+def calculate_firm_ties(manager_df):
+    """
+    Calculate info on political ties and centrality on the firm level. 
+
+    Args:
+        manager_df (pd.DataFrame): person-level manager political centralities. 
+    Retruns:
+        pd.DataFrame: firm's centrality in each year aggregated from 
+        its manager's personal ties to politicians.
+    """
+    # change servedCorps column from string split by "|" to list
+    manager_df['servedCorps'] = manager_df['servedCorps'].str.split('|')
+    firm_df = manager_df.explode('servedCorps').\
+        groupby(['servedCorps', 'year']).aggregate(
+        {i: FIRM_AGGREGATION for i in manager_df.columns
+         if i.endswith('Centrality')}
+    )
+    firm_df.columns = [''.join(col).strip() for col in firm_df.columns.values]
+    firm_df = firm_df.reset_index()
+    return firm_df
+
+
+# test
+# calculate_firm_ties(data)
